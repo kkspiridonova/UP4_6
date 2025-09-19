@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление пользователями</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: #f6f7fb; }
+        .navbar-blur { backdrop-filter: saturate(180%) blur(10px); background: linear-gradient(90deg,#fff 0,#f9fbff 100%); border-bottom: 1px solid #eef2f7; }
+        .brand-title { font-weight: 700; letter-spacing: .3px; }
+        .toolbar .btn { border-radius: 10px; font-weight: 500; }
+        .filters-card { border: none; border-radius: 14px; box-shadow: 0 6px 18px rgba(16,24,40,.06); }
+        .data-card { border: none; border-radius: 16px; box-shadow: 0 8px 24px rgba(16,24,40,.08); }
+        .table { margin-bottom: 0; }
+        .table thead th { border-bottom: 1px solid #eef2f7; font-weight: 600; color: #374151; padding: 16px; }
+        .table tbody td { padding: 16px; vertical-align: middle; border-bottom: 1px solid #f3f4f6; }
+        .table tbody tr:hover { background-color: #f8fafc; }
+        .btn-action { border-radius: 8px; padding: 6px 12px; font-size: 0.875rem; font-weight: 500; }
+        .btn-save { background: #28a74510; color: #28a745; border: 1px solid #28a74520; }
+        .btn-save:hover { background: #28a745; color: white; }
+        .btn-delete { background: #dc354510; color: #dc3545; border: 1px solid #dc354520; }
+        .btn-delete:hover { background: #dc3545; color: white; }
+        .form-control, .form-select { border-radius: 10px; border: 1px solid #d1d5db; padding: 10px 14px; }
+        .form-control:focus, .form-select:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,.1); }
+        .input-group-text { border-radius: 10px 0 0 10px; border: 1px solid #d1d5db; background: #f8fafc; }
+        .input-group .form-control { border-radius: 0 10px 10px 0; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #6b7280; }
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        .role-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+        .role-user { background: #e3f2fd; color: #1976d2; }
+        .role-customer { background: #f3e5f5; color: #7b1fa2; }
+        .role-seller { background: #e8f5e8; color: #388e3c; }
+        .role-admin { background: #fff3e0; color: #f57c00; }
+        .user-info { display: flex; flex-direction: column; gap: 4px; }
+        .user-name { font-weight: 600; color: #374151; }
+        .user-email { font-size: 0.875rem; color: #6b7280; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light navbar-blur sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand brand-title" href="/catalog">
+                <i class="fas fa-users me-2"></i>Cosmetic Store
+            </a>
+            <div class="toolbar d-flex gap-2">
+                <a href="/catalog" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Каталог
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="mb-4 fw-bold text-dark">
+                    <i class="fas fa-users me-2 text-primary"></i>Управление пользователями
+                </h2>
+
+                <div class="card filters-card mb-4">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Поиск по имени</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user text-muted"></i></span>
+                                    <input type="text" class="form-control" id="searchUser" placeholder="Поиск по имени пользователя...">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Поиск по email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-envelope text-muted"></i></span>
+                                    <input type="text" class="form-control" id="searchEmail" placeholder="Поиск по email...">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Роль</label>
+                                <select id="filterRole" class="form-select">
+                                    <option value="">Все роли</option>
+                                    <option value="USER">Пользователь</option>
+                                    <option value="CUSTOMER">Клиент</option>
+                                    <option value="SELLER">Продавец</option>
+                                    <option value="ADMIN">Администратор</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Сортировка</label>
+                                <select id="sortUsers" class="form-select">
+                                    <option value="username_asc">Имя А→Я</option>
+                                    <option value="username_desc">Имя Я→А</option>
+                                    <option value="email_asc">Email А→Я</option>
+                                    <option value="email_desc">Email Я→А</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card data-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Пользователь</th>
+                                        <th>Email</th>
+                                        <th>Роль</th>
+                                        <th width="200">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="emptyState" class="empty-state d-none">
+                            <i class="fas fa-users"></i>
+                            <h5>Пользователи не найдены</h5>
+                            <p>Попробуйте изменить параметры поиска</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let users = [];
+        let filteredUsers = [];
+
+        async function loadUsers() {
+            try {
+                const response = await fetch('/v1/api/admin/users');
+                if (response.ok) {
+                    users = await response.json();
+                    filteredUsers = [...users];
+                    renderUsers();
+                } else {
+                    console.error('Ошибка загрузки пользователей');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('d-none');
+                return;
+            }
+            
+            emptyState.classList.add('d-none');
+            tbody.innerHTML = '';
+
+            filteredUsers.forEach(user => {
+                const row = document.createElement('tr');
+                const roleClass = `role-${user.role?.toLowerCase() || 'user'}`;
+                const roleText = getRoleText(user.role);
+                
+                row.innerHTML = `
+                    <td><span class="badge bg-light text-dark">${user.id}</span></td>
+                    <td>
+                        <div class="user-info">
+                            <span class="user-name">${user.username || 'Неизвестно'}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="user-email">${user.email || '-'}</span>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm" data-role="role" style="width: 120px;">
+                            <option value="USER" ${user.role === 'USER' ? 'selected' : ''}>Пользователь</option>
+                            <option value="CUSTOMER" ${user.role === 'CUSTOMER' ? 'selected' : ''}>Клиент</option>
+                            <option value="SELLER" ${user.role === 'SELLER' ? 'selected' : ''}>Продавец</option>
+                            <option value="ADMIN" ${user.role === 'ADMIN' ? 'selected' : ''}>Администратор</option>
+                        </select>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-action btn-save" onclick="updateUserRole(${user.id}, this)" title="Сохранить">
+                                <i class="fas fa-save"></i>
+                            </button>
+                            <button class="btn btn-action btn-delete" onclick="deleteUser(${user.id})" title="Удалить">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function getRoleText(role) {
+            const roleTexts = {
+                'USER': 'Пользователь',
+                'CUSTOMER': 'Клиент',
+                'SELLER': 'Продавец',
+                'ADMIN': 'Администратор'
+            };
+            return roleTexts[role] || 'Неизвестно';
+        }
+
+        document.getElementById('searchUser').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            filteredUsers = users.filter(user => 
+                (user.username || '').toLowerCase().includes(searchTerm)
+            );
+            renderUsers();
+        });
+
+        document.getElementById('searchEmail').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            filteredUsers = users.filter(user => 
+                (user.email || '').toLowerCase().includes(searchTerm)
+            );
+            renderUsers();
+        });
+
+        document.getElementById('filterRole').addEventListener('change', function() {
+            const roleFilter = this.value;
+            filteredUsers = users.filter(user => 
+                !roleFilter || user.role === roleFilter
+            );
+            renderUsers();
+        });
+
+        document.getElementById('sortUsers').addEventListener('change', function() {
+            const sortBy = this.value;
+            filteredUsers.sort((a, b) => {
+                if (sortBy === 'username_asc') {
+                    return (a.username || '').localeCompare(b.username || '');
+                } else if (sortBy === 'username_desc') {
+                    return (b.username || '').localeCompare(a.username || '');
+                } else if (sortBy === 'email_asc') {
+                    return (a.email || '').localeCompare(b.email || '');
+                } else if (sortBy === 'email_desc') {
+                    return (b.email || '').localeCompare(a.email || '');
+                }
+                return 0;
+            });
+            renderUsers();
+        });
+
+        async function updateUserRole(userId, button) {
+            const select = button.parentElement.querySelector('[data-role="role"]');
+            const newRole = select.value;
+            
+            try {
+                const user = users.find(u => u.id === userId);
+                if (!user) return;
+
+                const response = await fetch(`/v1/api/admin/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: user.id,
+                        username: user.username,
+                        email: user.email,
+                        role: newRole
+                    })
+                });
+
+                if (response.ok) {
+                    user.role = newRole;
+                    loadUsers(); // Перезагружаем для обновления отображения
+                } else {
+                    const error = await response.text();
+                    alert('Ошибка обновления роли: ' + error);
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка обновления роли');
+            }
+        }
+
+        async function deleteUser(id) {
+            if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+                try {
+                    const response = await fetch(`/v1/api/admin/users/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        loadUsers();
+                    } else {
+                        const error = await response.text();
+                        alert('Ошибка удаления: ' + error);
+                    }
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    alert('Ошибка удаления');
+                }
+            }
+        }
+
+        loadUsers();
+    </script>
+</body>
+</html>

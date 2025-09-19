@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оформление заказа</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: #f6f7fb; }
+        .navbar-blur { backdrop-filter: saturate(180%) blur(10px); background: linear-gradient(90deg,#fff 0,#f9fbff 100%); border-bottom: 1px solid #eef2f7; }
+        .brand-title { font-weight: 700; letter-spacing: .3px; }
+        .toolbar .btn { border-radius: 10px; font-weight: 500; }
+        .order-card { border: none; border-radius: 16px; box-shadow: 0 8px 24px rgba(16,24,40,.08); }
+        .order-header { background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 16px 16px 0 0; padding: 20px; border-bottom: 1px solid #eef2f7; }
+        .order-item { border: none; border-radius: 12px; background: #fff; margin-bottom: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(16,24,40,.06); }
+        .order-item:hover { box-shadow: 0 4px 12px rgba(16,24,40,.1); }
+        .product-name { font-weight: 600; color: #374151; font-size: 1rem; }
+        .product-price { font-weight: 700; color: #0d6efd; }
+        .quantity-badge { background: #0d6efd10; color: #0d6efd; padding: 4px 8px; border-radius: 6px; font-weight: 600; }
+        .total-section { background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 12px; padding: 20px; margin-top: 20px; }
+        .total-amount { font-size: 1.5rem; font-weight: 700; color: #0d6efd; }
+        .btn-confirm { background: linear-gradient(135deg, #28a745, #20c997); border: none; color: white; font-weight: 600; padding: 12px 24px; border-radius: 12px; }
+        .btn-confirm:hover { background: linear-gradient(135deg, #20c997, #17a2b8); color: white; }
+        .address-card { border: 1px solid #eef2f7; border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
+        .address-card:hover { border-color: #0d6efd; box-shadow: 0 4px 12px rgba(13,110,253,.1); }
+        .address-card.selected { border-color: #0d6efd; background: #0d6efd10; }
+        .address-info { font-size: 0.9rem; color: #6b7280; }
+        .form-control:focus, .form-select:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,.1); }
+        .empty-state { text-align: center; padding: 60px 20px; color: #6b7280; }
+        .empty-state i { font-size: 4rem; margin-bottom: 1rem; opacity: 0.5; }
+        .step-indicator { display: flex; align-items: center; justify-content: center; margin-bottom: 30px; }
+        .step { display: flex; align-items: center; margin: 0 20px; }
+        .step-number { width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; color: #6b7280; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-right: 12px; }
+        .step.active .step-number { background: #0d6efd; color: white; }
+        .step.completed .step-number { background: #28a745; color: white; }
+        .step-line { width: 60px; height: 2px; background: #e2e8f0; margin: 0 10px; }
+        .step.completed + .step-line { background: #28a745; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light navbar-blur sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand brand-title" href="/catalog">
+                <i class="fas fa-credit-card me-2"></i>Cosmetic Store
+            </a>
+            <div class="toolbar d-flex gap-2">
+                <a href="/catalog" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-1"></i>Каталог
+                </a>
+                <a href="/cart-page" class="btn btn-outline-secondary">
+                    <i class="fas fa-shopping-cart me-1"></i>Корзина
+                </a>
+                <a href="/profile" class="btn btn-outline-secondary">
+                    <i class="fas fa-user me-1"></i>Профиль
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="mb-4 fw-bold text-dark">
+                    <i class="fas fa-credit-card me-2 text-primary"></i>Оформление заказа
+                </h2>
+
+                <div class="step-indicator">
+                    <div class="step completed">
+                        <div class="step-number">1</div>
+                        <span>Корзина</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step active">
+                        <div class="step-number">2</div>
+                        <span>Оформление</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <span>Подтверждение</span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-7">
+                        <div class="card order-card">
+                            <div class="order-header">
+                                <h5 class="fw-bold mb-0">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Адрес доставки
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="addressesList">
+                                </div>
+                                <div id="noAddresses" class="empty-state d-none">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <h5>Нет адресов</h5>
+                                    <p>Добавьте адрес в профиле</p>
+                                    <a href="/profile" class="btn btn-primary">
+                                        <i class="fas fa-plus me-1"></i>Добавить адрес
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-5">
+                        <div class="card order-card">
+                            <div class="order-header">
+                                <h5 class="fw-bold mb-0">
+                                    <i class="fas fa-shopping-bag me-2"></i>Ваш заказ
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="orderItems">
+                                </div>
+                                <div id="emptyOrder" class="empty-state d-none">
+                                    <i class="fas fa-shopping-bag"></i>
+                                    <h5>Корзина пуста</h5>
+                                    <p>Добавьте товары в корзину</p>
+                                    <a href="/catalog" class="btn btn-primary">
+                                        <i class="fas fa-shopping-bag me-1"></i>Перейти в каталог
+                                    </a>
+                                </div>
+                                
+                                <div class="total-section">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-muted">Товары:</span>
+                                        <span id="itemsCount">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="text-muted">Сумма:</span>
+                                        <span class="total-amount" id="totalAmount">0 ₽</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-grid">
+                                        <button class="btn btn-confirm" id="placeOrderBtn" disabled>
+                                            <i class="fas fa-check me-1"></i>Подтвердить заказ
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3" id="message"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let cart = null;
+        let addresses = [];
+        let selectedAddressId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await Promise.all([loadSummary(), loadAddresses()]);
+            document.getElementById('placeOrderBtn').addEventListener('click', placeOrder);
+        });
+
+        async function loadSummary() {
+            try {
+                const res = await fetch('/v1/api/cart');
+                if (!res.ok) {
+                    showEmptyOrder();
+                    return;
+                }
+                
+                cart = await res.json();
+                renderOrderItems();
+                updateTotal();
+            } catch (error) {
+                console.error('Ошибка загрузки корзины:', error);
+                showEmptyOrder();
+            }
+        }
+
+        function renderOrderItems() {
+            const orderItemsContainer = document.getElementById('orderItems');
+            const emptyOrder = document.getElementById('emptyOrder');
+            
+            if (!cart || !cart.items || cart.items.length === 0) {
+                showEmptyOrder();
+                return;
+            }
+
+            emptyOrder.classList.add('d-none');
+            orderItemsContainer.innerHTML = '';
+
+            cart.items.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'order-item';
+                const lineTotal = Number(item.product.price) * item.quantity;
+                
+                itemElement.innerHTML = `
+                    <div class="row align-items-center">
+                        <div class="col-8">
+                            <h6 class="product-name mb-1">${item.product.name}</h6>
+                            <p class="text-muted mb-0 small">${item.product.description || 'Описание отсутствует'}</p>
+                        </div>
+                        <div class="col-2 text-center">
+                            <span class="quantity-badge">× ${item.quantity}</span>
+                        </div>
+                        <div class="col-2 text-end">
+                            <span class="product-price">${lineTotal.toFixed(2)} ₽</span>
+                        </div>
+                    </div>
+                `;
+                orderItemsContainer.appendChild(itemElement);
+            });
+        }
+
+        function showEmptyOrder() {
+            document.getElementById('orderItems').innerHTML = '';
+            document.getElementById('emptyOrder').classList.remove('d-none');
+            document.getElementById('placeOrderBtn').disabled = true;
+        }
+
+        function updateTotal() {
+            if (!cart || !cart.items || cart.items.length === 0) {
+                showEmptyOrder();
+                return;
+            }
+
+            const itemsCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+            const totalAmount = cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+
+            document.getElementById('itemsCount').textContent = itemsCount;
+            document.getElementById('totalAmount').textContent = `${totalAmount.toFixed(2)} ₽`;
+        }
+
+        async function loadAddresses() {
+            try {
+                const res = await fetch('/v1/api/me/addresses');
+                if (!res.ok) {
+                    showNoAddresses();
+                    return;
+                }
+                
+                addresses = await res.json();
+                renderAddresses();
+            } catch (error) {
+                console.error('Ошибка загрузки адресов:', error);
+                showNoAddresses();
+            }
+        }
+
+        function renderAddresses() {
+            const addressesContainer = document.getElementById('addressesList');
+            const noAddresses = document.getElementById('noAddresses');
+            
+            if (!addresses || addresses.length === 0) {
+                showNoAddresses();
+                return;
+            }
+
+            noAddresses.classList.add('d-none');
+            addressesContainer.innerHTML = '';
+
+            addresses.forEach(address => {
+                const addressElement = document.createElement('div');
+                addressElement.className = 'address-card';
+                addressElement.onclick = () => selectAddress(address.id);
+                
+                addressElement.innerHTML = `
+                    <div class="d-flex align-items-start">
+                        <div class="form-check me-3">
+                            <input class="form-check-input" type="radio" name="address" value="${address.id}">
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${address.street || 'Адрес не указан'}</h6>
+                            <div class="address-info">
+                                <div>${address.city || 'Город не указан'}, ${address.country || 'Страна не указана'}</div>
+                                <div>Индекс: ${address.postalCode || 'Не указан'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                addressesContainer.appendChild(addressElement);
+            });
+        }
+
+        function showNoAddresses() {
+            document.getElementById('addressesList').innerHTML = '';
+            document.getElementById('noAddresses').classList.remove('d-none');
+            document.getElementById('placeOrderBtn').disabled = true;
+        }
+
+        function selectAddress(addressId) {
+            selectedAddressId = addressId;
+            
+            document.querySelectorAll('.address-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            document.querySelector(`input[value="${addressId}"]`).checked = true;
+            
+            document.getElementById('placeOrderBtn').disabled = false;
+        }
+
+        async function placeOrder() {
+            if (!selectedAddressId) {
+                showMessage('Выберите адрес доставки', 'warning');
+                return;
+            }
+
+            const button = document.getElementById('placeOrderBtn');
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Обработка...';
+
+            try {
+                const res = await fetch('/v1/api/orders/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ addressId: Number(selectedAddressId) })
+                });
+
+                if (res.ok) {
+                    showMessage('Заказ успешно оформлен! Спасибо за покупку!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/profile';
+                    }, 2000);
+                } else {
+                    const error = await res.text();
+                    showMessage('Ошибка оформления заказа: ' + error, 'danger');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showMessage('Ошибка оформления заказа', 'danger');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${text}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+        }
+    </script>
+</body>
+</html>
